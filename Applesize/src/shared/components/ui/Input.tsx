@@ -1,5 +1,5 @@
 import React from 'react';
-import { TextInput, StyleSheet, View } from 'react-native';
+import { TextInput, StyleSheet, View, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing } from '@/shared/theme';
 
@@ -22,13 +22,18 @@ export const Input: React.FC<InputProps> = ({
   autoCapitalize = 'none',
   keyboardType = 'default',
 }) => {
+  const webCursorStyle = Platform.select({
+    web: { cursor: 'text' } as any,
+    default: {},
+  });
+
   return (
     <View style={styles.container}>
       {icon && <Ionicons name={icon} size={20} color={colors.primary} style={styles.icon} />}
       <TextInput
-        style={styles.input}
+        style={[styles.input, webCursorStyle]}
         placeholder={placeholder}
-        placeholderTextColor={colors.textSecondary}
+        placeholderTextColor={colors.secondary} // Use secondary instead of silverDark
         value={value}
         onChangeText={onChangeText}
         secureTextEntry={secureTextEntry}
@@ -43,12 +48,12 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
+    backgroundColor: colors.background,
     borderRadius: 12,
     marginBottom: spacing.md,
     paddingHorizontal: spacing.md,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.primary,
     height: 50,
   },
   icon: {
@@ -56,8 +61,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    color: colors.text,
+    color: colors.primary,
     fontSize: 16,
-    cursor: 'text', // Required for web to show text cursor
   },
 });

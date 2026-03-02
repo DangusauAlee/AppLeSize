@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Alert, KeyboardAvoidingView, Platform, Pressable, Keyboard } from 'react-native';
+import { View, Alert, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { ScreenLayout } from '@/shared/components/ui/ScreenLayout';
 import { LogoHeader } from '@/shared/components/ui/LogoHeader';
@@ -14,6 +14,7 @@ export const SignUpScreen = () => {
   const [password, setPassword] = useState('');
 
   const handleSignUp = async () => {
+    Keyboard.dismiss();
     if (!email || !password) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
@@ -30,7 +31,7 @@ export const SignUpScreen = () => {
   return (
     <ScreenLayout>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-        <Pressable style={{ flex: 1 }} onPress={Keyboard.dismiss}>
+        <View style={{ flex: 1 }}>
           <View style={styles.inner}>
             <LogoHeader title="Applesize" subtitle="Join the Premium Marketplace" />
             <View style={styles.form}>
@@ -53,7 +54,7 @@ export const SignUpScreen = () => {
               <Button title="Back to Sign In" onPress={() => navigation.navigate('SignIn' as never)} type="secondary" />
             </View>
           </View>
-        </Pressable>
+        </View>
       </KeyboardAvoidingView>
     </ScreenLayout>
   );
