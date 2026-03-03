@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, View } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, View, ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing } from '../../theme';
 
@@ -10,6 +10,7 @@ interface ButtonProps {
   loading?: boolean;
   disabled?: boolean;
   icon?: React.ReactNode;
+  style?: ViewStyle;
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -19,6 +20,7 @@ export const Button: React.FC<ButtonProps> = ({
   loading = false,
   disabled = false,
   icon,
+  style,
 }) => {
   const isDisabled = disabled || loading;
 
@@ -43,7 +45,12 @@ export const Button: React.FC<ButtonProps> = ({
 
   if (type === 'primary') {
     return (
-      <TouchableOpacity onPress={onPress} disabled={isDisabled} activeOpacity={0.8}>
+      <TouchableOpacity
+        onPress={onPress}
+        disabled={isDisabled}
+        activeOpacity={0.8}
+        style={[styles.glow, style]}
+      >
         <LinearGradient
           colors={isDisabled ? [colors.border, colors.border] : [colors.primary, colors.secondary]}
           start={{ x: 0, y: 0 }}
@@ -65,6 +72,8 @@ export const Button: React.FC<ButtonProps> = ({
         type === 'secondary' && styles.secondary,
         type === 'outline' && styles.outline,
         isDisabled && styles.disabled,
+        type === 'secondary' && styles.glowSecondary,
+        style,
       ]}
     >
       {getContent()}
@@ -92,7 +101,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   secondary: {
-    backgroundColor: 'transparent',
+    backgroundColor: colors.background, // solid black background
     borderColor: colors.primary,
   },
   outline: {
@@ -120,5 +129,19 @@ const styles = StyleSheet.create({
   },
   disabledText: {
     color: colors.textSecondary,
+  },
+  glow: {
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+  glowSecondary: {
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
 });

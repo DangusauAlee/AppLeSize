@@ -7,7 +7,8 @@ import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { useToast } from '../context/ToastContext';
 import { supabase } from '../lib/supabase';
-import { styles as screenStyles } from './styles';
+import { styles } from './styles';
+// import logo from '../../assets/logo.png';
 
 export const SignUpScreen = () => {
   const navigation = useNavigation();
@@ -39,9 +40,9 @@ export const SignUpScreen = () => {
   return (
     <ScreenLayout>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-        <View style={screenStyles.inner}>
+        <View style={styles.inner}>
           <LogoHeader title="Applesize" subtitle="Join the Premium Marketplace" />
-          <View style={screenStyles.form}>
+          <View style={styles.form}>
             <Input
               icon="mail-outline"
               placeholder="Email"
@@ -57,11 +58,17 @@ export const SignUpScreen = () => {
               onChangeText={setPassword}
               secureTextEntry
             />
-            <Button title="Sign Up" onPress={handleSignUp} loading={loading} />
+            <Button
+              title="Sign Up"
+              onPress={handleSignUp}
+              loading={loading}
+              type="secondary"  // changed to secondary
+              style={{ marginBottom: 12 }}
+            />
             <Button
               title="Back to Sign In"
               onPress={() => navigation.navigate('SignIn' as never)}
-              type="secondary"
+              type="secondary"  // changed to secondary
               disabled={loading}
             />
           </View>

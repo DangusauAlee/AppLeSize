@@ -4,5 +4,6 @@ export type AuthStackParamList = {
 };
 
 export type AppStackParamList = {
+  Welcome: undefined;
   Home: undefined;
 };

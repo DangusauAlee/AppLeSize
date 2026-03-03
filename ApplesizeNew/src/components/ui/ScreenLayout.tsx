@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -10,8 +10,10 @@ interface ScreenLayoutProps {
 export const ScreenLayout: React.FC<ScreenLayoutProps> = ({ children }) => {
   const insets = useSafeAreaInsets();
 
+  const webStyle = Platform.OS === 'web' ? { height: '100vh' } : {};
+
   return (
-    <LinearGradient colors={['#0A0A0A', '#1A1A1A']} style={styles.gradient}>
+    <LinearGradient colors={['#0A0A0A', '#1A1A1A']} style={[styles.gradient, webStyle]}>
       <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
         {children}
       </View>

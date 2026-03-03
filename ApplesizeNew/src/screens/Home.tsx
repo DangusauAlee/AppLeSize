@@ -10,8 +10,9 @@ export const HomeScreen = () => {
   const { showToast } = useToast();
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    showToast('Signed out', 'info');
+    const { error } = await supabase.auth.signOut();
+    if (error) showToast(error.message, 'error');
+    else showToast('Signed out successfully', 'success');
   };
 
   return (

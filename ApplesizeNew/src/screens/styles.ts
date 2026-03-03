@@ -10,4 +10,7 @@ export const styles = StyleSheet.create({
   form: {
     width: '100%',
   },
+  buttonSpacer: {
+    height: spacing.md, // Add space between buttons
+  },
 });

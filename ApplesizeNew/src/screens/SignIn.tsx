@@ -7,8 +7,8 @@ import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { useToast } from '../context/ToastContext';
 import { supabase } from '../lib/supabase';
-import { styles as screenStyles } from './styles';
-// import logo from '../../assets/logo.png'; // uncomment when you add logo
+import { styles } from './styles';
+// import logo from '../../assets/logo.png';
 
 export const SignInScreen = () => {
   const navigation = useNavigation();
@@ -33,9 +33,9 @@ export const SignInScreen = () => {
   return (
     <ScreenLayout>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-        <View style={screenStyles.inner}>
+        <View style={styles.inner}>
           <LogoHeader title="Applesize" subtitle="Premium Phone Marketplace" />
-          <View style={screenStyles.form}>
+          <View style={styles.form}>
             <Input
               icon="mail-outline"
               placeholder="Email"
@@ -51,11 +51,17 @@ export const SignInScreen = () => {
               onChangeText={setPassword}
               secureTextEntry
             />
-            <Button title="Sign In" onPress={handleSignIn} loading={loading} />
+            <Button
+              title="Sign In"
+              onPress={handleSignIn}
+              loading={loading}
+              type="secondary"  // changed to secondary
+              style={{ marginBottom: 12 }}
+            />
             <Button
               title="Create Account"
               onPress={() => navigation.navigate('SignUp' as never)}
-              type="secondary"
+              type="secondary"  // changed to secondary
               disabled={loading}
             />
           </View>

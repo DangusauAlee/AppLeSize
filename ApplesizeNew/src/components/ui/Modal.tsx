@@ -12,6 +12,8 @@ interface ModalProps {
   onCancel?: () => void;
   confirmText?: string;
   cancelText?: string;
+  confirmLoading?: boolean;    // new prop
+  confirmDisabled?: boolean;   // new prop
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -23,6 +25,8 @@ export const Modal: React.FC<ModalProps> = ({
   onCancel,
   confirmText = 'Confirm',
   cancelText = 'Cancel',
+  confirmLoading = false,
+  confirmDisabled = false,
 }) => {
   return (
     <RNModal
@@ -39,10 +43,22 @@ export const Modal: React.FC<ModalProps> = ({
               {message && <Text style={styles.message}>{message}</Text>}
               <View style={styles.buttons}>
                 {onCancel && (
-                  <Button title={cancelText} onPress={onCancel} type="outline" style={styles.button} />
+                  <Button
+                    title={cancelText}
+                    onPress={onCancel}
+                    type="outline"
+                    style={styles.button}
+                  />
                 )}
                 {onConfirm && (
-                  <Button title={confirmText} onPress={onConfirm} type="primary" style={styles.button} />
+                  <Button
+                    title={confirmText}
+                    onPress={onConfirm}
+                    type="primary"
+                    style={styles.button}
+                    loading={confirmLoading}
+                    disabled={confirmDisabled}
+                  />
                 )}
               </View>
             </View>

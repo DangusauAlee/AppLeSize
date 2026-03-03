@@ -42,7 +42,7 @@ export const Toast: React.FC<ToastProps> = ({
   if (!visible) return null;
 
   const backgroundColor = {
-    success: colors.success,
+    success: colors.primary, // changed from colors.success to silver
     error: colors.error,
     info: colors.primary,
   }[type];
@@ -66,7 +66,7 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
   message: {
-    color: colors.white,
+    color: colors.black, // changed to black for contrast on silver
     fontSize: 14,
     fontWeight: '600',
   },
