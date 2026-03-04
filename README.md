@@ -1,2 +1,0 @@
-# AppLeSize
-Apple retail MarketPlace
