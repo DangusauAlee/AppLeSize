@@ -22,6 +22,9 @@ const LoginScreen = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const textColor = theme === 'dark' ? '#FFFFFF' : '#000000';
+  const mutedColor = theme === 'dark' ? '#FFFFFF80' : '#00000080';
+
   const handleLogin = async () => {
     if (!email || !password) {
       showToast('error', 'Error', 'Email and password are required');
@@ -55,14 +58,14 @@ const LoginScreen = () => {
               <Ionicons
                 name="log-in"
                 size={48}
-                color={theme === 'dark' ? '#C0C0C0' : '#000000'}
+                // Color is overridden by IconWithHighlight
               />
             }
           />
-          <Text className="text-2xl font-bold text-brand-black dark:text-brand-silver mt-4">
+          <Text style={{ color: textColor, fontSize: 24, fontWeight: 'bold', marginTop: 16 }}>
             Welcome Back
           </Text>
-          <Text className="text-brand-black/70 dark:text-brand-silver/70 text-center mt-2">
+          <Text style={{ color: mutedColor, textAlign: 'center', marginTop: 8 }}>
             Sign in to continue swapping
           </Text>
         </View>
@@ -89,11 +92,9 @@ const LoginScreen = () => {
 
         <TouchableOpacity
           onPress={() => navigation.navigate('ForgotPassword')}
-          className="self-end mb-4"
+          style={{ alignSelf: 'flex-end', marginBottom: 16 }}
         >
-          <Text className="text-brand-black/60 dark:text-brand-silver/60 text-sm">
-            Forgot password?
-          </Text>
+          <Text style={{ color: mutedColor, fontSize: 14 }}>Forgot password?</Text>
         </TouchableOpacity>
 
         <Button
@@ -103,14 +104,10 @@ const LoginScreen = () => {
           className="mt-2"
         />
 
-        <View className="flex-row justify-center mt-6">
-          <Text className="text-brand-black/60 dark:text-brand-silver/60">
-            Don't have an account?{' '}
-          </Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 24 }}>
+          <Text style={{ color: mutedColor }}>Don't have an account? </Text>
           <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
-            <Text className="text-brand-black dark:text-brand-silver font-semibold">
-              Sign Up
-            </Text>
+            <Text style={{ color: textColor, fontWeight: '600' }}>Sign Up</Text>
           </TouchableOpacity>
         </View>
       </View>

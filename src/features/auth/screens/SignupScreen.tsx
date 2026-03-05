@@ -23,6 +23,9 @@ const SignupScreen = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const textColor = theme === 'dark' ? '#FFFFFF' : '#000000';
+  const mutedColor = theme === 'dark' ? '#FFFFFF80' : '#00000080';
+
   const handleSignup = async () => {
     if (!email || !password || !confirmPassword) {
       showToast('error', 'Error', 'All fields are required');
@@ -65,14 +68,14 @@ const SignupScreen = () => {
               <Ionicons
                 name="person-add"
                 size={48}
-                color={theme === 'dark' ? '#C0C0C0' : '#000000'}
+                // color overridden by IconWithHighlight
               />
             }
           />
-          <Text className="text-2xl font-bold text-brand-black dark:text-brand-silver mt-4">
+          <Text style={{ color: textColor, fontSize: 24, fontWeight: 'bold', marginTop: 16 }}>
             Create Account
           </Text>
-          <Text className="text-brand-black/70 dark:text-brand-silver/70 text-center mt-2">
+          <Text style={{ color: mutedColor, textAlign: 'center', marginTop: 8 }}>
             Sign up to start swapping
           </Text>
         </View>
@@ -114,14 +117,10 @@ const SignupScreen = () => {
           className="mt-4"
         />
 
-        <View className="flex-row justify-center mt-6">
-          <Text className="text-brand-black/60 dark:text-brand-silver/60">
-            Already have an account?{' '}
-          </Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 24 }}>
+          <Text style={{ color: mutedColor }}>Already have an account? </Text>
           <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-            <Text className="text-brand-black dark:text-brand-silver font-semibold">
-              Log In
-            </Text>
+            <Text style={{ color: textColor, fontWeight: '600' }}>Log In</Text>
           </TouchableOpacity>
         </View>
       </View>

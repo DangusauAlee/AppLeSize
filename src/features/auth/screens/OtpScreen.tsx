@@ -26,6 +26,9 @@ const OtpScreen = () => {
   const [canResend, setCanResend] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
+  const textColor = theme === 'dark' ? '#FFFFFF' : '#000000';
+  const mutedColor = theme === 'dark' ? '#FFFFFF80' : '#00000080';
+
   React.useEffect(() => {
     startTimer();
     return () => {
@@ -97,14 +100,13 @@ const OtpScreen = () => {
               <Ionicons
                 name="mail"
                 size={48}
-                color={theme === 'dark' ? '#C0C0C0' : '#000000'}
               />
             }
           />
-          <Text className="text-2xl font-bold text-brand-black dark:text-brand-silver mt-4">
+          <Text style={{ color: textColor, fontSize: 24, fontWeight: 'bold', marginTop: 16 }}>
             Verify Your Email
           </Text>
-          <Text className="text-brand-black/70 dark:text-brand-silver/70 text-center mt-2">
+          <Text style={{ color: mutedColor, textAlign: 'center', marginTop: 8 }}>
             We've sent a 6-digit code to{'\n'}{email}
           </Text>
         </View>
@@ -126,21 +128,17 @@ const OtpScreen = () => {
           className="mt-4"
         />
 
-        <View className="flex-row justify-center mt-6">
-          <Text className="text-brand-black/60 dark:text-brand-silver/60">
-            Didn't receive code?{' '}
-          </Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 24 }}>
+          <Text style={{ color: mutedColor }}>Didn't receive code? </Text>
           {canResend ? (
             <Text
               onPress={handleResend}
-              className="text-brand-black dark:text-brand-silver font-semibold"
+              style={{ color: textColor, fontWeight: '600' }}
             >
               Resend
             </Text>
           ) : (
-            <Text className="text-brand-black/40 dark:text-brand-silver/40">
-              Resend in {timeLeft}s
-            </Text>
+            <Text style={{ color: mutedColor }}>Resend in {timeLeft}s</Text>
           )}
         </View>
       </View>

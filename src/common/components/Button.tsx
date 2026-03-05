@@ -28,22 +28,22 @@ const Button: React.FC<ButtonProps> = ({
   const isDark = theme === 'dark';
   const scale = useSharedValue(1);
 
-  const silver = '#C0C0C0';
   const black = '#000000';
-  const lightSilver = '#F0F0F0';
+  const white = '#FFFFFF';
 
   const getBackgroundColor = () => {
     if (variant === 'outline') return 'transparent';
-    if (variant === 'primary') return isDark ? black : lightSilver;
-    return isDark ? '#333333' : '#E0E0E0';
+    // Primary button: opposite of page background
+    return isDark ? black : white;
   };
 
-  const borderColor = isDark ? silver : black;
+  const borderColor = isDark ? white : black;
   const getTextColor = () => {
-    if (variant === 'outline') return isDark ? silver : black;
-    return isDark ? silver : black;
+    if (variant === 'outline') return isDark ? white : black;
+    // For primary, text is opposite of background
+    return isDark ? white : black;
   };
-  const shadowColor = isDark ? silver : black;
+  const shadowColor = isDark ? white : black;
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -57,10 +57,9 @@ const Button: React.FC<ButtonProps> = ({
     scale.value = withSpring(1);
   };
 
-  // Platform-specific shadow
   const shadowStyle = Platform.select({
     web: {
-      boxShadow: `0 6px 10px ${shadowColor}80`, // 80 = 50% opacity in hex
+      boxShadow: `0 6px 10px ${shadowColor}80`,
     },
     default: {
       shadowColor,

@@ -17,6 +17,9 @@ const ForgotPasswordScreen = () => {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const textColor = theme === 'dark' ? '#FFFFFF' : '#000000';
+  const mutedColor = theme === 'dark' ? '#FFFFFF80' : '#00000080';
+
   const handleReset = async () => {
     if (!email) {
       showToast('error', 'Error', 'Please enter your email');
@@ -46,14 +49,13 @@ const ForgotPasswordScreen = () => {
               <Ionicons
                 name="key"
                 size={48}
-                color={theme === 'dark' ? '#C0C0C0' : '#000000'}
               />
             }
           />
-          <Text className="text-2xl font-bold text-brand-black dark:text-brand-silver mt-4">
+          <Text style={{ color: textColor, fontSize: 24, fontWeight: 'bold', marginTop: 16 }}>
             Reset Password
           </Text>
-          <Text className="text-brand-black/70 dark:text-brand-silver/70 text-center mt-2">
+          <Text style={{ color: mutedColor, textAlign: 'center', marginTop: 8 }}>
             Enter your email to receive a reset link
           </Text>
         </View>
@@ -74,12 +76,13 @@ const ForgotPasswordScreen = () => {
           className="mt-4"
         />
 
-        <Button
-          title="Back to Login"
-          onPress={() => navigation.goBack()}
-          variant="outline"
-          className="mt-2"
-        />
+        <View style={{ marginTop: 16 }}>
+          <Button
+            title="Back to Login"
+            onPress={() => navigation.goBack()}
+            variant="outline"
+          />
+        </View>
       </View>
     </ScreenContainer>
   );

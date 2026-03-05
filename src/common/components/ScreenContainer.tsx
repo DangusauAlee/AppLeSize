@@ -10,7 +10,7 @@ interface ScreenContainerProps {
 
 const ScreenContainer: React.FC<ScreenContainerProps> = ({ children, scroll = false, className = '' }) => {
   const { theme } = useTheme();
-  const backgroundColor = theme === 'dark' ? '#000000' : '#F0F0F0'; // Very light silver
+  const backgroundColor = theme === 'dark' ? '#000000' : '#FFFFFF';
 
   if (scroll) {
     return (

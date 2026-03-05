@@ -1,5 +1,5 @@
 import React from 'react';
-import { TextInput, View, Text, TextInputProps } from 'react-native';
+import { TextInput, View, Text, TextInputProps, Platform } from 'react-native';
 import { useTheme } from '../../theme';
 
 interface InputProps extends TextInputProps {
@@ -12,16 +12,28 @@ const Input: React.FC<InputProps> = ({ label, error, containerClassName = '', cl
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
-  const silver = '#C0C0C0';
   const black = '#000000';
-  const lightSilver = '#F0F0F0';
+  const white = '#FFFFFF';
 
-  const backgroundColor = isDark ? black : lightSilver;
-  const textColor = isDark ? silver : black;
-  const borderColor = isDark ? silver : black;
-  const shadowColor = isDark ? silver : black;
-  const labelColor = isDark ? silver : black;
-  const placeholderColor = isDark ? '#666666' : '#666666';
+  const backgroundColor = isDark ? white : black;
+  const textColor = isDark ? black : white;
+  const borderColor = isDark ? white : black;
+  const shadowColor = isDark ? white : black;
+  const labelColor = isDark ? white : black;
+  const placeholderColor = isDark ? black : white;
+
+  const shadowStyle = Platform.select({
+    web: {
+      boxShadow: `0 6px 10px ${shadowColor}80`,
+    },
+    default: {
+      shadowColor,
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.5,
+      shadowRadius: 10,
+      elevation: 12,
+    },
+  });
 
   return (
     <View className={`mb-4 ${containerClassName}`}>
@@ -40,12 +52,8 @@ const Input: React.FC<InputProps> = ({ label, error, containerClassName = '', cl
             paddingHorizontal: 16,
             paddingVertical: 12,
             color: textColor,
-            shadowColor,
-            shadowOffset: { width: 0, height: 6 },
-            shadowOpacity: 0.5,
-            shadowRadius: 10,
-            elevation: 12,
           },
+          shadowStyle,
           style,
         ]}
         placeholderTextColor={placeholderColor}

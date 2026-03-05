@@ -4,9 +4,8 @@ import Toast, { ToastConfig } from 'react-native-toast-message';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withSpring,
   withTiming,
-  runOnJS,
+  withSpring,
 } from 'react-native-reanimated';
 import { useTheme } from '../../theme';
 
@@ -14,20 +13,22 @@ const AnimatedView = Animated.createAnimatedComponent(View);
 
 const ToastConfigWithTheme: (theme: 'light' | 'dark') => ToastConfig = (theme) => {
   const isDark = theme === 'dark';
-  const silver = '#C0C0C0';
   const black = '#000000';
+  const white = '#FFFFFF';
 
-  const successBackground = isDark ? black : silver;
-  const errorBackground = isDark ? black : silver; // Use brand colors even for error
-  const infoBackground = isDark ? black : silver;
-  const textColor = isDark ? silver : black;
+  const successBackground = isDark ? black : white;
+  const errorBackground = isDark ? black : white;
+  const infoBackground = isDark ? black : white;
+  const textColor = isDark ? white : black;
+  const borderColor = isDark ? white : black;
+  const shadowColor = isDark ? white : black;
 
   const ToastComponent = ({ text1, text2, type }: any) => {
     const opacity = useSharedValue(0);
     const translateY = useSharedValue(-20);
 
     useEffect(() => {
-      opacity.value = withTiming(1, { duration: 250 });
+      opacity.value = withTiming(1, { duration: 300 });
       translateY.value = withSpring(0, { damping: 15 });
     }, []);
 
@@ -58,8 +59,8 @@ const ToastConfigWithTheme: (theme: 'light' | 'dark') => ToastConfig = (theme) =
             marginHorizontal: 16,
             marginTop: 8,
             borderWidth: 1,
-            borderColor: isDark ? silver : black,
-            shadowColor: isDark ? silver : black,
+            borderColor,
+            shadowColor,
             shadowOffset: { width: 0, height: 4 },
             shadowOpacity: 0.4,
             shadowRadius: 6,
@@ -91,7 +92,6 @@ export const showToast = (type: 'success' | 'error' | 'info', text1: string, tex
   Toast.show({ type, text1, text2, position: 'top' });
 };
 
-// This component wraps Toast with theme
 const ToastWithTheme = () => {
   const { theme } = useTheme();
   return <Toast config={ToastConfigWithTheme(theme)} />;
