@@ -1,68 +1,66 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../../hooks/useAuth';
 import { profileService } from '../services/profileService';
-import { Profile, UpdateProfileData } from '../types';
+import type { Profile, UpdateProfileData } from '../types';
 
-export const useProfile = () => {
+const PROFILE_QUERY_KEY = (userId?: string) => ['profile', userId] as const;
+const PROFILE_COMPLETE_KEY = (userId?: string) => ['profile-complete', userId] as const;
+
+export function useProfile() {
   const { user } = useAuth();
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  const loadProfile = useCallback(async () => {
-    if (!user) return;
-    try {
-      setLoading(true);
-      const data = await profileService.getProfile(user.id);
-      setProfile(data);
-      setError(null);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [user]);
+  // Profile data query
+  const profileQuery = useQuery<Profile | null, Error>({
+    queryKey: PROFILE_QUERY_KEY(user?.id),
+    queryFn: () => {
+      if (!user?.id) throw new Error('No authenticated user');
+      return profileService.getProfile(user.id);
+    },
+    enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000,   // 5 minutes
+    gcTime: 10 * 60 * 1000,
+  });
 
-  useEffect(() => {
-    loadProfile();
-  }, [loadProfile]);
+  // Completion status query (via RPC)
+  const completeQuery = useQuery<boolean, Error>({
+    queryKey: PROFILE_COMPLETE_KEY(user?.id),
+    queryFn: () => {
+      if (!user?.id) throw new Error('No authenticated user');
+      return profileService.isProfileComplete(user.id);
+    },
+    enabled: !!user?.id,
+    staleTime: 2 * 60 * 1000,   // shorter cache since it's a boolean
+    gcTime: 5 * 60 * 1000,
+  });
 
-  const updateProfile = useCallback(async (updates: UpdateProfileData) => {
-    if (!user) throw new Error('No user logged in');
-    try {
-      setLoading(true);
-      const updated = await profileService.updateProfile(user.id, updates);
-      setProfile(updated);
-      return updated;
-    } catch (err: any) {
-      setError(err.message);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, [user]);
+  const updateProfileMutation = useMutation({
+    mutationFn: (updates: UpdateProfileData) => {
+      if (!user?.id) throw new Error('No authenticated user');
+      return profileService.updateProfile(user.id, updates);
+    },
+    onSuccess: (updatedProfile) => {
+      // Update profile cache
+      queryClient.setQueryData(PROFILE_QUERY_KEY(user?.id), updatedProfile);
+      // Invalidate completion check → will refetch RPC on next render
+      queryClient.invalidateQueries({ queryKey: PROFILE_COMPLETE_KEY(user?.id) });
+    },
+  });
 
-  const markWelcomeSeen = useCallback(async () => {
-    if (!user) throw new Error('No user logged in');
-    try {
-      await profileService.markWelcomeSeen(user.id);
-      // Refresh profile
-      await loadProfile();
-    } catch (err: any) {
-      setError(err.message);
-      throw err;
-    }
-  }, [user, loadProfile]);
+  return {
+    profile: profileQuery.data,
+    isProfileLoading: profileQuery.isLoading,
+    profileError: profileQuery.error,
 
-  // Memoize return value to prevent unnecessary re-renders
-  const value = useMemo(() => ({
-    profile,
-    loading,
-    error,
-    updateProfile,
-    markWelcomeSeen,
-    refetch: loadProfile,
-  }), [profile, loading, error, updateProfile, markWelcomeSeen, loadProfile]);
+    isProfileComplete: completeQuery.data ?? false,
+    isCompleteLoading: completeQuery.isLoading,
+    completeError: completeQuery.error,
 
-  return value;
-};
+    updateProfile: updateProfileMutation.mutateAsync,
+    isUpdating: updateProfileMutation.isPending,
+    updateError: updateProfileMutation.error,
+
+    refetchProfile: profileQuery.refetch,
+    refetchComplete: completeQuery.refetch,
+  };
+}

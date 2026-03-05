@@ -1,5 +1,5 @@
 import { supabase } from '../../../services/supabase';
-import { Profile, UpdateProfileData } from '../types';
+import type { Profile, UpdateProfileData } from '../types';
 
 export const profileService = {
   async getProfile(userId: string): Promise<Profile | null> {
@@ -11,15 +11,15 @@ export const profileService = {
 
     if (error) {
       console.error('Error fetching profile:', error);
-      return null;
+      throw error;
     }
     return data;
   },
 
-  async updateProfile(userId: string, updates: UpdateProfileData): Promise<Profile | null> {
+  async updateProfile(userId: string, updates: UpdateProfileData): Promise<Profile> {
     const { data, error } = await supabase
       .from('profiles')
-      .update(updates)
+      .update(updates)  // ← removed updated_at here
       .eq('id', userId)
       .select()
       .single();
@@ -31,26 +31,15 @@ export const profileService = {
     return data;
   },
 
-  async markWelcomeSeen(userId: string): Promise<void> {
-    const { error } = await supabase
-      .from('profiles')
-      .update({ has_seen_welcome: true })
-      .eq('id', userId);
-
-    if (error) {
-      console.error('Error marking welcome seen:', error);
-      throw error;
-    }
-  },
-
   async isProfileComplete(userId: string): Promise<boolean> {
     const { data, error } = await supabase
       .rpc('is_profile_complete', { user_id: userId });
 
     if (error) {
-      console.error('Error checking profile completion:', error);
-      return false;
+      console.error('RPC is_profile_complete error:', error);
+      throw error;
     }
-    return data;
-  }
+
+    return data === true;
+  },
 };
