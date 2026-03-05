@@ -1,6 +1,6 @@
-import React, { useState, useRef } from 'react';
-import { View, Text } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, BackHandler } from 'react-native';
+import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../../navigation/types';
 import ScreenContainer from '../../../common/components/ScreenContainer';
@@ -12,29 +12,50 @@ import IconWithHighlight from '../../../common/components/IconWithHighlight';
 import { supabase } from '../../../services/supabase';
 import { useTheme } from '../../../theme';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../../../hooks/useAuth'; // <-- import
 
 type OtpScreenNavigationProp = NativeStackNavigationProp<AuthStackParamList, 'Otp'>;
 
 const OtpScreen = () => {
   const navigation = useNavigation<OtpScreenNavigationProp>();
   const route = useRoute();
-  const { email } = route.params as { email: string };
+  const { email, type } = route.params as { email: string; type: 'signup' | 'recovery' };
   const { theme } = useTheme();
+  const { setResettingPassword } = useAuth(); // <-- use setter
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [timeLeft, setTimeLeft] = useState(60);
   const [canResend, setCanResend] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const verifiedRef = useRef(false); // track if verification succeeded
 
   const textColor = theme === 'dark' ? '#FFFFFF' : '#000000';
   const mutedColor = theme === 'dark' ? '#FFFFFF80' : '#00000080';
 
-  React.useEffect(() => {
+  useEffect(() => {
     startTimer();
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
+      // If user leaves screen without successful verification, clear flag
+      if (type === 'recovery' && !verifiedRef.current) {
+        setResettingPassword(false);
+      }
     };
   }, []);
+
+  // Handle back button / android hardware back
+  useFocusEffect(
+    React.useCallback(() => {
+      const onBackPress = () => {
+        if (type === 'recovery' && !verifiedRef.current) {
+          setResettingPassword(false);
+        }
+        return false; // let default back action happen
+      };
+      BackHandler.addEventListener('hardwareBackPress', onBackPress);
+      return () => BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+    }, [type])
+  );
 
   const startTimer = () => {
     setTimeLeft(60);
@@ -62,12 +83,21 @@ const OtpScreen = () => {
       const { error } = await supabase.auth.verifyOtp({
         email,
         token: code,
-        type: 'signup',
+        type: type,
       });
 
       if (error) throw error;
 
-      showToast('success', 'Email verified!', 'Redirecting...');
+      verifiedRef.current = true; // mark success
+      showToast('success', 'Verified!', 'Redirecting...');
+      
+      if (type === 'signup') {
+        // For signup, user is now logged in; flag is false anyway, root will switch to Main
+        // Navigation will be handled by auth state change, no need to navigate
+      } else if (type === 'recovery') {
+        // Navigate to set new password screen (flag remains true)
+        navigation.navigate('SetNewPassword', { email });
+      }
     } catch (error: any) {
       showToast('error', 'Verification failed', error.message);
     } finally {
@@ -79,8 +109,11 @@ const OtpScreen = () => {
     if (!canResend) return;
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOtp({ email });
-      if (error) throw error;
+      if (type === 'signup') {
+        await supabase.auth.signInWithOtp({ email });
+      } else if (type === 'recovery') {
+        await supabase.auth.resetPasswordForEmail(email);
+      }
       showToast('success', 'Code resent!', 'Check your email');
       startTimer();
     } catch (err: any) {
@@ -104,7 +137,7 @@ const OtpScreen = () => {
             }
           />
           <Text style={{ color: textColor, fontSize: 24, fontWeight: 'bold', marginTop: 16 }}>
-            Verify Your Email
+            Verify Your {type === 'recovery' ? 'Reset Code' : 'Email'}
           </Text>
           <Text style={{ color: mutedColor, textAlign: 'center', marginTop: 8 }}>
             We've sent a 6-digit code to{'\n'}{email}

@@ -9,7 +9,7 @@ import { View, ActivityIndicator } from 'react-native';
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const RootNavigator = () => {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, resettingPassword } = useAuth();
 
   if (isLoading) {
     return (
@@ -19,13 +19,21 @@ const RootNavigator = () => {
     );
   }
 
+  // Show Auth stack if:
+  // - No user is logged in (normal auth flow)
+  // - OR we are in the middle of a password reset (resettingPassword = true)
+  if (!user || resettingPassword) {
+    return (
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="Auth" component={AuthStackNavigator} />
+      </Stack.Navigator>
+    );
+  }
+
+  // Otherwise, user is logged in and not resetting password → show Main app
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {user ? (
-        <Stack.Screen name="Main" component={BottomTabNavigator} />
-      ) : (
-        <Stack.Screen name="Auth" component={AuthStackNavigator} />
-      )}
+      <Stack.Screen name="Main" component={BottomTabNavigator} />
     </Stack.Navigator>
   );
 };

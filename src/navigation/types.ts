@@ -18,7 +18,8 @@ export type AuthStackParamList = {
   Login: undefined;
   Signup: undefined;
   ForgotPassword: undefined;
-  Otp: { email: string };
+  Otp: { email: string; type: 'signup' | 'recovery' };
+  SetNewPassword: { email: string };
 };
 
 export type RootStackParamList = {

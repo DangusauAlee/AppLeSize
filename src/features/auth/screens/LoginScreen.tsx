@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -12,18 +12,25 @@ import IconWithHighlight from '../../../common/components/IconWithHighlight';
 import { supabase } from '../../../services/supabase';
 import { useTheme } from '../../../theme';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../../../hooks/useAuth'; // <-- import
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<AuthStackParamList, 'Login'>;
 
 const LoginScreen = () => {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const { theme } = useTheme();
+  const { setResettingPassword } = useAuth(); // <-- use setter
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
   const textColor = theme === 'dark' ? '#FFFFFF' : '#000000';
   const mutedColor = theme === 'dark' ? '#FFFFFF80' : '#00000080';
+
+  // Ensure flag is cleared when login screen is shown (e.g., user navigated back)
+  useEffect(() => {
+    setResettingPassword(false);
+  }, []);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -40,6 +47,7 @@ const LoginScreen = () => {
 
       if (error) throw error;
 
+      // Success – user will be logged in, root navigator switches to Main
       showToast('success', 'Welcome back!');
     } catch (error: any) {
       showToast('error', 'Login failed', error.message);
@@ -58,7 +66,6 @@ const LoginScreen = () => {
               <Ionicons
                 name="log-in"
                 size={48}
-                // Color is overridden by IconWithHighlight
               />
             }
           />

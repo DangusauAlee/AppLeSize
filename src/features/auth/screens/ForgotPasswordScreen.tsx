@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { AuthStackParamList } from '../../../navigation/types';
 import ScreenContainer from '../../../common/components/ScreenContainer';
 import Button from '../../../common/components/Button';
 import Input from '../../../common/components/Input';
@@ -10,10 +12,14 @@ import IconWithHighlight from '../../../common/components/IconWithHighlight';
 import { supabase } from '../../../services/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../theme';
+import { useAuth } from '../../../hooks/useAuth'; // <-- import
+
+type ForgotPasswordNavigationProp = NativeStackNavigationProp<AuthStackParamList, 'ForgotPassword'>;
 
 const ForgotPasswordScreen = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<ForgotPasswordNavigationProp>();
   const { theme } = useTheme();
+  const { setResettingPassword } = useAuth(); // <-- use setter
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -30,8 +36,12 @@ const ForgotPasswordScreen = () => {
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email);
       if (error) throw error;
-      showToast('success', 'Reset link sent!', 'Check your email');
-      navigation.goBack();
+      
+      // Set flag so that RootNavigator keeps Auth stack active
+      setResettingPassword(true);
+      
+      showToast('success', 'Reset code sent!', 'Check your email for the 6-digit code');
+      navigation.navigate('Otp', { email, type: 'recovery' });
     } catch (error: any) {
       showToast('error', 'Failed', error.message);
     } finally {
@@ -41,7 +51,7 @@ const ForgotPasswordScreen = () => {
 
   return (
     <ScreenContainer>
-      <LoadingOverlay visible={loading} message="Sending reset link..." />
+      <LoadingOverlay visible={loading} message="Sending reset code..." />
       <View className="flex-1 justify-center px-6">
         <View className="items-center mb-8">
           <IconWithHighlight
@@ -56,7 +66,7 @@ const ForgotPasswordScreen = () => {
             Reset Password
           </Text>
           <Text style={{ color: mutedColor, textAlign: 'center', marginTop: 8 }}>
-            Enter your email to receive a reset link
+            Enter your email to receive a 6-digit reset code
           </Text>
         </View>
 
@@ -70,7 +80,7 @@ const ForgotPasswordScreen = () => {
         />
 
         <Button
-          title="Send Reset Link"
+          title="Send Reset Code"
           onPress={handleReset}
           loading={loading}
           className="mt-4"
