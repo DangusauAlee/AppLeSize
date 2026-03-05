@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { OnboardingStackParamList } from '../../../navigation/types';
+import { AppStackParamList } from '../../../navigation/types';
 import ScreenContainer from '../../../common/components/ScreenContainer';
 import Button from '../../../common/components/Button';
 import LoadingOverlay from '../../../common/components/LoadingOverlay';
@@ -17,11 +17,10 @@ import IconWithHighlight from '../../../common/components/IconWithHighlight';
 import { useTheme } from '../../../theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useProfile } from '../hooks/useProfile';
-import LottieView from 'lottie-react-native';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
-type WelcomeNavigationProp = NativeStackNavigationProp<OnboardingStackParamList, 'Welcome'>;
+type WelcomeNavigationProp = NativeStackNavigationProp<AppStackParamList, 'Onboarding'>;
 
 interface Slide {
   id: string;
@@ -29,8 +28,6 @@ interface Slide {
   title: string;
   description: string;
   icon: keyof typeof Ionicons.glyphMap;
-  animation: any; // Lottie animation source (we'll use require)
-  backgroundColor: string;
 }
 
 const slides: Slide[] = [
@@ -40,8 +37,6 @@ const slides: Slide[] = [
     title: 'Powerful Tools at Your Fingertips',
     description: 'List products, propose swaps, create shops, and chat with other retailers – all in one place.',
     icon: 'rocket',
-    animation: require('../../../assets/animations/features.json'), // placeholder
-    backgroundColor: '#C0C0C0',
   },
   {
     id: '2',
@@ -49,8 +44,6 @@ const slides: Slide[] = [
     title: 'Trust & Safety First',
     description: 'Full profiles required for posting and chatting. We are not responsible for listed items – always inspect before purchase.',
     icon: 'shield-checkmark',
-    animation: require('../../../assets/animations/security.json'), // placeholder
-    backgroundColor: '#000000',
   },
   {
     id: '3',
@@ -58,8 +51,6 @@ const slides: Slide[] = [
     title: 'Earn Your Applesized Badge',
     description: 'Complete your profile, add your Market ID and shop name to unlock the golden badge and gain trust.',
     icon: 'ribbon',
-    animation: require('../../../assets/animations/verification.json'), // placeholder
-    backgroundColor: '#C0C0C0',
   },
 ];
 
@@ -69,7 +60,7 @@ const WelcomeScreen = () => {
   const { markWelcomeSeen } = useProfile();
   const [loading, setLoading] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const flatListRef = useRef<FlatList>(null);
+  const flatListRef = React.useRef<FlatList>(null);
   const isDark = theme === 'dark';
 
   const textColor = isDark ? '#FFFFFF' : '#000000';
@@ -79,7 +70,8 @@ const WelcomeScreen = () => {
     setLoading(true);
     try {
       await markWelcomeSeen();
-      // RootNavigator will automatically switch to Main because has_seen_welcome becomes true
+      // After updating, the onboarding gate will re-evaluate and switch to Main automatically
+      // No manual navigation needed because the AppStack will re-render with new data.
     } catch (error: any) {
       showToast('error', 'Error', error.message);
     } finally {
@@ -96,35 +88,19 @@ const WelcomeScreen = () => {
   };
 
   const renderSlide = ({ item }: { item: Slide }) => (
-    <View style={{ width, height, backgroundColor: item.backgroundColor }}>
-      <View className="flex-1 justify-center items-center px-8">
-        <IconWithHighlight
-          icon={<Ionicons name={item.icon} size={64} color={isDark ? '#FFFFFF' : '#000000'} />}
-        />
-        <View className="mt-6 w-full h-48">
-          <LottieView
-            source={item.animation}
-            autoPlay
-            loop
-            style={{ width: '100%', height: '100%' }}
-          />
-        </View>
-        <Text
-          style={{ color: isDark ? '#FFFFFF' : '#000000', fontSize: 14, fontWeight: '600', marginTop: 16 }}
-        >
-          {item.category}
-        </Text>
-        <Text
-          style={{ color: isDark ? '#FFFFFF' : '#000000', fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginTop: 8 }}
-        >
-          {item.title}
-        </Text>
-        <Text
-          style={{ color: mutedColor, fontSize: 16, textAlign: 'center', marginTop: 8, paddingHorizontal: 16 }}
-        >
-          {item.description}
-        </Text>
-      </View>
+    <View style={{ width, flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 }}>
+      <IconWithHighlight
+        icon={<Ionicons name={item.icon} size={64} color={isDark ? '#FFFFFF' : '#000000'} />}
+      />
+      <Text style={{ color: textColor, fontSize: 14, fontWeight: '600', marginTop: 16 }}>
+        {item.category}
+      </Text>
+      <Text style={{ color: textColor, fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginTop: 8 }}>
+        {item.title}
+      </Text>
+      <Text style={{ color: mutedColor, fontSize: 16, textAlign: 'center', marginTop: 8 }}>
+        {item.description}
+      </Text>
     </View>
   );
 

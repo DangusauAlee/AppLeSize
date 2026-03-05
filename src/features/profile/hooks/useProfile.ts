@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useAuth } from '../../../hooks/useAuth';
 import { profileService } from '../services/profileService';
 import { Profile, UpdateProfileData } from '../types';
@@ -46,7 +46,7 @@ export const useProfile = () => {
     if (!user) throw new Error('No user logged in');
     try {
       await profileService.markWelcomeSeen(user.id);
-      // Refetch profile to ensure we have latest data
+      // Refresh profile
       await loadProfile();
     } catch (err: any) {
       setError(err.message);
@@ -54,20 +54,15 @@ export const useProfile = () => {
     }
   }, [user, loadProfile]);
 
-  const isProfileComplete = useCallback(async (): Promise<boolean> => {
-    if (!user) return false;
-    return profileService.isProfileComplete(user.id);
-  }, [user]);
-
+  // Memoize return value to prevent unnecessary re-renders
   const value = useMemo(() => ({
     profile,
     loading,
     error,
     updateProfile,
     markWelcomeSeen,
-    isProfileComplete,
     refetch: loadProfile,
-  }), [profile, loading, error, updateProfile, markWelcomeSeen, isProfileComplete, loadProfile]);
+  }), [profile, loading, error, updateProfile, markWelcomeSeen, loadProfile]);
 
   return value;
 };

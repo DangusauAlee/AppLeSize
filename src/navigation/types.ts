@@ -32,3 +32,8 @@ export type RootStackParamList = {
   Onboarding: undefined;
   Main: undefined;
 };
+
+export type AppStackParamList = {
+  Onboarding: undefined;
+  Main: undefined;
+};
