@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, BackHandler } from 'react-native';
+import { View, Text } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../../navigation/types';
@@ -12,7 +12,7 @@ import IconWithHighlight from '../../../common/components/IconWithHighlight';
 import { supabase } from '../../../services/supabase';
 import { useTheme } from '../../../theme';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../../../hooks/useAuth'; // <-- import
+import { useAuth } from '../../../hooks/useAuth';
 
 type SetNewPasswordNavigationProp = NativeStackNavigationProp<AuthStackParamList, 'SetNewPassword'>;
 
@@ -21,7 +21,7 @@ const SetNewPasswordScreen = () => {
   const route = useRoute();
   const { email } = route.params as { email: string };
   const { theme } = useTheme();
-  const { setResettingPassword } = useAuth(); // <-- use setter
+  const { setResettingPassword } = useAuth();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -29,7 +29,6 @@ const SetNewPasswordScreen = () => {
   const textColor = theme === 'dark' ? '#FFFFFF' : '#000000';
   const mutedColor = theme === 'dark' ? '#FFFFFF80' : '#00000080';
 
-  // If user leaves without completing, clear flag
   useEffect(() => {
     return () => {
       setResettingPassword(false);
@@ -55,15 +54,13 @@ const SetNewPasswordScreen = () => {
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
 
-      showToast('success', 'Password updated!', 'You can now log in with your new password');
+      showToast('success', 'Password updated!', 'Please log in with your new password');
       
-      // Clear the flag – now user is logged in, RootNavigator will show Main
+      // Sign out to force login with new password
+      await supabase.auth.signOut();
+      
+      // Clear flag and navigate to login
       setResettingPassword(false);
-      
-      // Optionally, navigate to Login (but since flag is cleared and user is logged in, Main will appear)
-      // We can navigate to Main explicitly, but root will handle it. Let's navigate to Login just in case,
-      // but note that user is already logged in, so Root will show Main anyway.
-      // We'll navigate to Login and let root decide.
       navigation.navigate('Login');
     } catch (error: any) {
       showToast('error', 'Update failed', error.message);

@@ -22,7 +22,13 @@ export type AuthStackParamList = {
   SetNewPassword: { email: string };
 };
 
+export type OnboardingStackParamList = {
+  ProfileCompletion: undefined;
+  Welcome: undefined;
+};
+
 export type RootStackParamList = {
   Auth: undefined;
+  Onboarding: undefined;
   Main: undefined;
 };
