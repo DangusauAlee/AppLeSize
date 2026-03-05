@@ -9,28 +9,23 @@ export const useProfile = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!user) {
-      setProfile(null);
+  const loadProfile = useCallback(async () => {
+    if (!user) return;
+    try {
+      setLoading(true);
+      const data = await profileService.getProfile(user.id);
+      setProfile(data);
+      setError(null);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
       setLoading(false);
-      return;
     }
+  }, [user]);
 
-    const loadProfile = async () => {
-      try {
-        setLoading(true);
-        const data = await profileService.getProfile(user.id);
-        setProfile(data);
-        setError(null);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
+  useEffect(() => {
     loadProfile();
-  }, [user?.id]); // Use user.id instead of whole user object to avoid unnecessary re-runs
+  }, [loadProfile]);
 
   const updateProfile = useCallback(async (updates: UpdateProfileData) => {
     if (!user) throw new Error('No user logged in');
@@ -51,19 +46,19 @@ export const useProfile = () => {
     if (!user) throw new Error('No user logged in');
     try {
       await profileService.markWelcomeSeen(user.id);
-      setProfile(prev => prev ? { ...prev, has_seen_welcome: true } : null);
+      // Refetch profile to ensure we have latest data
+      await loadProfile();
     } catch (err: any) {
       setError(err.message);
       throw err;
     }
-  }, [user]);
+  }, [user, loadProfile]);
 
   const isProfileComplete = useCallback(async (): Promise<boolean> => {
     if (!user) return false;
     return profileService.isProfileComplete(user.id);
   }, [user]);
 
-  // Memoize the return value to prevent unnecessary re-renders in consumers
   const value = useMemo(() => ({
     profile,
     loading,
@@ -71,7 +66,8 @@ export const useProfile = () => {
     updateProfile,
     markWelcomeSeen,
     isProfileComplete,
-  }), [profile, loading, error, updateProfile, markWelcomeSeen, isProfileComplete]);
+    refetch: loadProfile,
+  }), [profile, loading, error, updateProfile, markWelcomeSeen, isProfileComplete, loadProfile]);
 
   return value;
 };

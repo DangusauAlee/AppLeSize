@@ -24,14 +24,13 @@ const RootNavigator = () => {
       }
       if (profile) {
         const complete = await isProfileComplete();
-        // Show onboarding if profile incomplete OR welcome not seen
         const needsOnboarding = !complete || !profile.has_seen_welcome;
         setShouldShowOnboarding(needsOnboarding);
       }
       setChecking(false);
     };
     checkOnboarding();
-  }, [user, profile]);
+  }, [user, profile, isProfileComplete]);
 
   if (authLoading || profileLoading || checking) {
     return (
@@ -41,7 +40,6 @@ const RootNavigator = () => {
     );
   }
 
-  // Show Auth stack if no user or resetting password
   if (!user || resettingPassword) {
     return (
       <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -50,7 +48,6 @@ const RootNavigator = () => {
     );
   }
 
-  // Show Onboarding stack if needed
   if (shouldShowOnboarding) {
     return (
       <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -59,7 +56,6 @@ const RootNavigator = () => {
     );
   }
 
-  // Otherwise show Main app
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Main" component={BottomTabNavigator} />
