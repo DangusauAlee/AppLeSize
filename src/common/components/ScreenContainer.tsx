@@ -1,6 +1,6 @@
 import React from 'react';
 import { SafeAreaView, ScrollView, View } from 'react-native';
-import { useColorScheme } from 'nativewind';
+import { useTheme } from '../../theme';
 
 interface ScreenContainerProps {
   children: React.ReactNode;
@@ -9,16 +9,17 @@ interface ScreenContainerProps {
 }
 
 const ScreenContainer: React.FC<ScreenContainerProps> = ({ children, scroll = false, className = '' }) => {
-  const { colorScheme } = useColorScheme();
-  const bgClass = colorScheme === 'dark' ? 'bg-black' : 'bg-white';
+  const { theme } = useTheme();
+  const backgroundColor = theme === 'dark' ? '#000000' : '#F0F0F0'; // Very light silver
 
   if (scroll) {
     return (
-      <SafeAreaView className={`flex-1 ${bgClass}`}>
+      <SafeAreaView style={{ flex: 1, backgroundColor }}>
         <ScrollView
-          className={`flex-1 px-4 ${className}`}
+          style={{ flex: 1, backgroundColor }}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ flexGrow: 1 }}
+          className={className}
         >
           {children}
         </ScrollView>
@@ -27,7 +28,7 @@ const ScreenContainer: React.FC<ScreenContainerProps> = ({ children, scroll = fa
   }
 
   return (
-    <SafeAreaView className={`flex-1 ${bgClass} px-4 ${className}`}>
+    <SafeAreaView style={{ flex: 1, backgroundColor }} className={className}>
       {children}
     </SafeAreaView>
   );

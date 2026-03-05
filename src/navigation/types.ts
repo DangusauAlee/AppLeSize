@@ -18,10 +18,10 @@ export type AuthStackParamList = {
   Login: undefined;
   Signup: undefined;
   ForgotPassword: undefined;
+  Otp: { email: string };
 };
 
 export type RootStackParamList = {
   Auth: undefined;
   Main: undefined;
-  // Other modals can be added
 };

@@ -14,7 +14,10 @@ const Tab = createBottomTabNavigator<RootTabParamList>();
 
 const BottomTabNavigator = () => {
   const { theme } = useTheme();
-  const iconColor = theme === 'dark' ? '#C0C0C0' : '#000000';
+  const isDark = theme === 'dark';
+  const iconColor = isDark ? '#C0C0C0' : '#000000';
+  const backgroundColor = isDark ? '#000000' : '#F0F0F0';
+  const borderColor = isDark ? '#C0C0C0' : '#000000';
 
   return (
     <Tab.Navigator
@@ -31,17 +34,33 @@ const BottomTabNavigator = () => {
         tabBarActiveTintColor: iconColor,
         tabBarInactiveTintColor: iconColor,
         tabBarStyle: {
-          backgroundColor: theme === 'dark' ? '#000' : '#fff',
-          borderTopColor: theme === 'dark' ? '#C0C0C0' : '#000',
+          backgroundColor,
+          borderTopColor: borderColor,
+          borderTopWidth: 1,
+          height: 70, // Increased height
+          paddingBottom: 0,
+          paddingTop: 4,
         },
+        tabBarItemStyle: {
+          height: 70,
+          justifyContent: 'center',
+        },
+        tabBarLabelStyle: {
+          fontWeight: '500',
+          fontSize: 12,
+          lineHeight: 16, // Ensure enough space for text
+          marginBottom: 0,
+          marginTop: 2,
+        },
+        tabBarLabel: route.name,
         headerShown: false,
       })}
     >
-      <Tab.Screen name="Feed" component={FeedStackNavigator} />
-      <Tab.Screen name="Swaps" component={SwapsScreen} />
-      <Tab.Screen name="Urgent" component={UrgentScreen} />
-      <Tab.Screen name="Shops" component={ShopsScreen} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
+      <Tab.Screen name="Feed" component={FeedStackNavigator} options={{ title: 'Feed' }} />
+      <Tab.Screen name="Swaps" component={SwapsScreen} options={{ title: 'Swaps' }} />
+      <Tab.Screen name="Urgent" component={UrgentScreen} options={{ title: 'Urgent' }} />
+      <Tab.Screen name="Shops" component={ShopsScreen} options={{ title: 'Shops' }} />
+      <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: 'Profile' }} />
     </Tab.Navigator>
   );
 };

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, FlatList, ActivityIndicator } from 'react-native';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import ScreenContainer from '../../../common/components/ScreenContainer';
 import SegmentedControl from '../../../common/components/SegmentedControl';
 import ProductCard from '../../../common/components/ProductCard';
@@ -12,6 +13,7 @@ const FeedMainScreen = () => {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const feedType = selectedIndex === 0 ? 'products' : 'demands';
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, status, refetch, isRefetching } = useFeed(feedType);
+  const tabBarHeight = useBottomTabBarHeight();
 
   const handleEndReached = () => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -97,7 +99,7 @@ const FeedMainScreen = () => {
             message="Check back later or create a new listing"
           />
         }
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: tabBarHeight }}
         showsVerticalScrollIndicator={false}
       />
     </ScreenContainer>

@@ -24,10 +24,13 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "name": "Applesize"
     },
-    "plugins": [
-      "expo-image"
-    ]
+    "plugins": ["expo-image"],
+    "extra": {
+      "supabaseUrl": "https://jzbeclypgbqlviqnhksq.supabase.co",
+      "supabaseAnonKey": "sb_publishable_DzooqKbR2DRVUUqnI7fkfg_K2v8WZG7"
+    }
   }
 }

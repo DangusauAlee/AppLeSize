@@ -1,6 +1,7 @@
 import React from 'react';
-import { TouchableOpacity, Text, ActivityIndicator, View } from 'react-native';
-import { useColorScheme } from 'nativewind';
+import { TouchableOpacity, Text, ActivityIndicator, View, Platform } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
+import { useTheme } from '../../theme';
 
 interface ButtonProps {
   title: string;
@@ -12,6 +13,8 @@ interface ButtonProps {
   className?: string;
 }
 
+const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
+
 const Button: React.FC<ButtonProps> = ({
   title,
   onPress,
@@ -21,36 +24,86 @@ const Button: React.FC<ButtonProps> = ({
   icon,
   className = '',
 }) => {
-  const { colorScheme } = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+  const scale = useSharedValue(1);
 
-  const baseClasses = 'flex-row items-center justify-center px-4 py-3 rounded-lg';
-  const variantClasses = {
-    primary: 'bg-brand-black dark:bg-brand-silver',
-    secondary: 'bg-brand-silver dark:bg-brand-black',
-    outline: 'border border-brand-black dark:border-brand-silver bg-transparent',
+  const silver = '#C0C0C0';
+  const black = '#000000';
+  const lightSilver = '#F0F0F0';
+
+  const getBackgroundColor = () => {
+    if (variant === 'outline') return 'transparent';
+    if (variant === 'primary') return isDark ? black : lightSilver;
+    return isDark ? '#333333' : '#E0E0E0';
   };
-  const textClasses = {
-    primary: 'text-brand-silver dark:text-brand-black',
-    secondary: 'text-brand-black dark:text-brand-silver',
-    outline: 'text-brand-black dark:text-brand-silver',
+
+  const borderColor = isDark ? silver : black;
+  const getTextColor = () => {
+    if (variant === 'outline') return isDark ? silver : black;
+    return isDark ? silver : black;
   };
+  const shadowColor = isDark ? silver : black;
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const handlePressIn = () => {
+    scale.value = withSpring(0.95);
+  };
+
+  const handlePressOut = () => {
+    scale.value = withSpring(1);
+  };
+
+  // Platform-specific shadow
+  const shadowStyle = Platform.select({
+    web: {
+      boxShadow: `0 6px 10px ${shadowColor}80`, // 80 = 50% opacity in hex
+    },
+    default: {
+      shadowColor,
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.5,
+      shadowRadius: 10,
+      elevation: 12,
+    },
+  });
 
   return (
-    <TouchableOpacity
+    <AnimatedTouchable
       onPress={onPress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
       disabled={disabled || loading}
-      className={`${baseClasses} ${variantClasses[variant]} ${disabled ? 'opacity-50' : ''} ${className}`}
+      style={[
+        {
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingHorizontal: 16,
+          paddingVertical: 12,
+          borderRadius: 8,
+          borderWidth: 1,
+          borderColor,
+          backgroundColor: getBackgroundColor(),
+          opacity: disabled ? 0.5 : 1,
+        },
+        shadowStyle,
+        animatedStyle,
+      ]}
+      className={className}
     >
       {loading ? (
-        <ActivityIndicator color={variant === 'outline' ? (isDark ? '#C0C0C0' : '#000000') : (isDark ? '#000000' : '#C0C0C0')} />
+        <ActivityIndicator color={getTextColor()} />
       ) : (
         <>
-          {icon && <View className="mr-2">{icon}</View>}
-          <Text className={`font-medium ${textClasses[variant]}`}>{title}</Text>
+          {icon && <View style={{ marginRight: 8 }}>{icon}</View>}
+          <Text style={{ color: getTextColor(), fontWeight: '500' }}>{title}</Text>
         </>
       )}
-    </TouchableOpacity>
+    </AnimatedTouchable>
   );
 };
 

@@ -1,5 +1,6 @@
 import React from 'react';
 import { TextInput, View, Text, TextInputProps } from 'react-native';
+import { useTheme } from '../../theme';
 
 interface InputProps extends TextInputProps {
   label?: string;
@@ -7,16 +8,55 @@ interface InputProps extends TextInputProps {
   containerClassName?: string;
 }
 
-const Input: React.FC<InputProps> = ({ label, error, containerClassName = '', className = '', ...props }) => {
+const Input: React.FC<InputProps> = ({ label, error, containerClassName = '', className = '', style, ...props }) => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+
+  const silver = '#C0C0C0';
+  const black = '#000000';
+  const lightSilver = '#F0F0F0';
+
+  const backgroundColor = isDark ? black : lightSilver;
+  const textColor = isDark ? silver : black;
+  const borderColor = isDark ? silver : black;
+  const shadowColor = isDark ? silver : black;
+  const labelColor = isDark ? silver : black;
+  const placeholderColor = isDark ? '#666666' : '#666666';
+
   return (
     <View className={`mb-4 ${containerClassName}`}>
-      {label && <Text className="text-brand-black dark:text-brand-silver mb-1 font-medium">{label}</Text>}
+      {label && (
+        <Text style={{ color: labelColor, marginBottom: 4, fontWeight: '500' }}>
+          {label}
+        </Text>
+      )}
       <TextInput
-        className={`border rounded-lg px-4 py-3 text-brand-black dark:text-brand-silver border-brand-black dark:border-brand-silver ${error ? 'border-red-500' : ''} ${className}`}
-        placeholderTextColor="#9CA3AF"
+        style={[
+          {
+            backgroundColor,
+            borderWidth: 1,
+            borderColor: error ? '#ef4444' : borderColor,
+            borderRadius: 8,
+            paddingHorizontal: 16,
+            paddingVertical: 12,
+            color: textColor,
+            shadowColor,
+            shadowOffset: { width: 0, height: 6 },
+            shadowOpacity: 0.5,
+            shadowRadius: 10,
+            elevation: 12,
+          },
+          style,
+        ]}
+        placeholderTextColor={placeholderColor}
+        className={className}
         {...props}
       />
-      {error && <Text className="text-red-500 text-sm mt-1">{error}</Text>}
+      {error && (
+        <Text style={{ color: '#ef4444', fontSize: 12, marginTop: 4 }}>
+          {error}
+        </Text>
+      )}
     </View>
   );
 };
