@@ -4,7 +4,6 @@ import { profileService } from '../services/profileService';
 import type { Profile, UpdateProfileData } from '../types';
 
 const PROFILE_QUERY_KEY = (userId?: string) => ['profile', userId] as const;
-const PROFILE_COMPLETE_KEY = (userId?: string) => ['profile-complete', userId] as const;
 
 export function useProfile() {
   const { user } = useAuth();
@@ -18,32 +17,28 @@ export function useProfile() {
       return profileService.getProfile(user.id);
     },
     enabled: !!user?.id,
-    staleTime: 5 * 60 * 1000,   // 5 minutes
+    staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   });
 
-  // Completion status query (via RPC)
-  const completeQuery = useQuery<boolean, Error>({
-    queryKey: PROFILE_COMPLETE_KEY(user?.id),
-    queryFn: () => {
-      if (!user?.id) throw new Error('No authenticated user');
-      return profileService.isProfileComplete(user.id);
-    },
-    enabled: !!user?.id,
-    staleTime: 2 * 60 * 1000,   // shorter cache since it's a boolean
-    gcTime: 5 * 60 * 1000,
-  });
+  // Derived completion status
+  const isProfileComplete = Boolean(
+    profileQuery.data?.first_name &&
+    profileQuery.data?.last_name &&
+    profileQuery.data?.phone &&
+    profileQuery.data?.country &&
+    profileQuery.data?.state &&
+    profileQuery.data?.address
+  );
 
+  // Update profile mutation
   const updateProfileMutation = useMutation({
     mutationFn: (updates: UpdateProfileData) => {
       if (!user?.id) throw new Error('No authenticated user');
       return profileService.updateProfile(user.id, updates);
     },
     onSuccess: (updatedProfile) => {
-      // Update profile cache
       queryClient.setQueryData(PROFILE_QUERY_KEY(user?.id), updatedProfile);
-      // Invalidate completion check → will refetch RPC on next render
-      queryClient.invalidateQueries({ queryKey: PROFILE_COMPLETE_KEY(user?.id) });
     },
   });
 
@@ -52,15 +47,11 @@ export function useProfile() {
     isProfileLoading: profileQuery.isLoading,
     profileError: profileQuery.error,
 
-    isProfileComplete: completeQuery.data ?? false,
-    isCompleteLoading: completeQuery.isLoading,
-    completeError: completeQuery.error,
-
+    isProfileComplete,
     updateProfile: updateProfileMutation.mutateAsync,
     isUpdating: updateProfileMutation.isPending,
     updateError: updateProfileMutation.error,
 
     refetchProfile: profileQuery.refetch,
-    refetchComplete: completeQuery.refetch,
   };
 }

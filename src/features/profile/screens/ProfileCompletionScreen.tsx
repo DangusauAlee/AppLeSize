@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, Dimensions } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { OnboardingStackParamList } from '../../../navigation/types';
+import { View, Text, Dimensions, StyleSheet } from 'react-native';
 import { MotiView } from 'moti';
 
 import ScreenContainer from '../../../common/components/ScreenContainer';
@@ -13,23 +10,23 @@ import { showToast } from '../../../common/components/Toast';
 import IconWithHighlight from '../../../common/components/IconWithHighlight';
 import { useTheme } from '../../../theme';
 import { Ionicons } from '@expo/vector-icons';
-
 import { useProfile } from '../hooks/useProfile';
+import { InteractionManager } from 'react-native';
 
 const { width } = Dimensions.get('window');
 const MAX_FORM_WIDTH = Math.min(500, width * 0.9);
 
-type ProfileCompletionNavigationProp = NativeStackNavigationProp<OnboardingStackParamList, 'ProfileCompletion'>;
+interface Props {
+  onComplete: () => void;
+}
 
-const ProfileCompletionScreen = () => {
-  const navigation = useNavigation<ProfileCompletionNavigationProp>();
+const ProfileCompletionScreen = ({ onComplete }: Props) => {
   const { theme } = useTheme();
   const {
     profile,
     isProfileLoading,
     isUpdating,
     updateProfile,
-    isProfileComplete,
   } = useProfile();
 
   const [firstName, setFirstName] = useState('');
@@ -58,12 +55,6 @@ const ProfileCompletionScreen = () => {
     }
   }, [profile]);
 
-  useEffect(() => {
-    if (isProfileComplete) {
-      navigation.navigate('Welcome');
-    }
-  }, [isProfileComplete, navigation]);
-
   const handleSubmit = async () => {
     if (!firstName.trim() || !lastName.trim() || !phone.trim() ||
         !country.trim() || !state.trim() || !address.trim()) {
@@ -84,7 +75,9 @@ const ProfileCompletionScreen = () => {
       });
 
       showToast('success', 'Profile Updated', 'Welcome to Applesize!');
-      navigation.navigate('Welcome');
+      InteractionManager.runAfterInteractions(() => {
+        onComplete();
+      });
     } catch (error: any) {
       showToast('error', 'Failed to save', error.message || 'Please try again');
     }
@@ -113,7 +106,9 @@ const ProfileCompletionScreen = () => {
         </View>
 
         <View style={{ width: MAX_FORM_WIDTH }}>
-          <MotiView transition={{ staggerChildren: 90 }}>
+          {/* Removed invalid transition prop from MotiView; each child animates independently with the parent's stagger? 
+              If you want staggered children, use the `delay` prop on each child instead. */}
+          <MotiView>
             <Input label="First Name *" value={firstName} onChangeText={setFirstName} placeholder="John" />
             <Input label="Last Name *" value={lastName} onChangeText={setLastName} placeholder="Doe" />
             <Input label="Phone Number *" value={phone} onChangeText={setPhone} placeholder="+234 801 234 5678" keyboardType="phone-pad" />
@@ -122,7 +117,7 @@ const ProfileCompletionScreen = () => {
             <Input label="Full Address *" value={address} onChangeText={setAddress} placeholder="123 Apple Street, Ikeja" />
           </MotiView>
 
-          <View style={{ marginTop: 32, padding: 20, backgroundColor: 'rgba(0,0,0,0.05)', borderRadius: 16, ...isDark && { backgroundColor: 'rgba(255,255,255,0.05)' } }}>
+          <View style={{ marginTop: 32, padding: 20, backgroundColor: 'rgba(0,0,0,0.05)', borderRadius: 16, ...(isDark && { backgroundColor: 'rgba(255,255,255,0.05)' }) }}>
             <Text style={{ color: mutedColor, fontSize: 14 }}>
               Optional — complete these to earn your Applesized badge and build trust:
             </Text>
@@ -131,13 +126,15 @@ const ProfileCompletionScreen = () => {
           <Input label="Market ID Number (Optional)" value={idNumber} onChangeText={setIdNumber} placeholder="APPL-XXXXXX" style={{ marginTop: 16 }} />
           <Input label="Shop/Business Name (Optional)" value={businessName} onChangeText={setBusinessName} placeholder="Apple Empire Store" style={{ marginTop: 16 }} />
 
-          <Button
-            title="Continue"
-            onPress={handleSubmit}
-            loading={isUpdating}
-            disabled={isUpdating}
-            style={{ marginTop: 40 }}
-          />
+          {/* Button doesn't accept style prop; wrap in a View with marginTop */}
+          <View style={{ marginTop: 40 }}>
+            <Button
+              title="Continue"
+              onPress={handleSubmit}
+              loading={isUpdating}
+              disabled={isUpdating}
+            />
+          </View>
         </View>
       </MotiView>
     </ScreenContainer>
