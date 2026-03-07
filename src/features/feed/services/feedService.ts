@@ -1,21 +1,52 @@
 import { supabase } from '../../../services/supabase';
-import { FeedItem } from '../types';
+import type { FeedPage, SearchFilters, ListingType } from '../types';
 
-export const fetchFeed = async (userId: string, page: number, limit: number = 10, feedType: 'products' | 'demands'): Promise<FeedItem[]> => {
-  // This is a mock implementation. Replace with actual RPC call.
-  // Example: const { data } = await supabase.rpc('get_personalised_feed', { user_id: userId, page, limit, feed_type: feedType });
-  // For now, return mock data.
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(Array.from({ length: limit }, (_, i) => ({
-        id: `item-${page}-${i}`,
-        title: `${feedType === 'products' ? 'Product' : 'Demand'} ${page * limit + i + 1}`,
-        price: feedType === 'products' ? Math.random() * 100 : undefined,
-        images: ['https://via.placeholder.com/300'],
-        type: feedType === 'products' ? 'product' : 'demand',
-        isSaved: Math.random() > 0.5,
-        urgent: Math.random() > 0.8,
-      })));
-    }, 1000);
-  });
+export const feedService = {
+  async getPersonalizedFeed(
+    userId: string,
+    type: ListingType,
+    limit: number,
+    offset: number
+  ): Promise<FeedPage> {
+    const { data, error } = await supabase.rpc('get_personalized_feed', {
+      p_user_id: userId,
+      p_type: type,
+      p_limit: limit,
+      p_offset: offset,
+    });
+
+    if (error) throw error;
+
+    const listings = data || [];
+    return {
+      listings,
+      hasMore: listings.length === limit,
+    };
+  },
+
+  async searchListings(
+    userId: string,
+    filters: SearchFilters,
+    limit: number,
+    offset: number
+  ): Promise<FeedPage> {
+    // Transform filters for RPC
+    const rpcFilters: any = { ...filters };
+    if (filters.condition) rpcFilters.conditions = filters.condition;
+
+    const { data, error } = await supabase.rpc('search_listings', {
+      p_filters: rpcFilters,
+      p_user_id: userId,
+      p_limit: limit,
+      p_offset: offset,
+    });
+
+    if (error) throw error;
+
+    const listings = data || [];
+    return {
+      listings,
+      hasMore: listings.length === limit,
+    };
+  },
 };

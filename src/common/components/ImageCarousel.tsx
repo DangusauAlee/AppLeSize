@@ -3,16 +3,26 @@ import { View, FlatList, Image, Dimensions } from 'react-native';
 import { useColorScheme } from 'nativewind';
 
 interface ImageCarouselProps {
-  images: string[];
+  images?: string[];  // make optional
   height?: number;
 }
 
 const { width: screenWidth } = Dimensions.get('window');
 
-const ImageCarousel: React.FC<ImageCarouselProps> = ({ images, height = 200 }) => {
+const ImageCarousel: React.FC<ImageCarouselProps> = ({ 
+  images = [], // default to empty array
+  height = 200 
+}) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
   const { colorScheme } = useColorScheme();
+
+  // If no images, show a placeholder (or nothing)
+  if (images.length === 0) {
+    return (
+      <View style={{ height, backgroundColor: '#f0f0f0' }} />
+    );
+  }
 
   const onScroll = (event: any) => {
     const index = Math.round(event.nativeEvent.contentOffset.x / screenWidth);
