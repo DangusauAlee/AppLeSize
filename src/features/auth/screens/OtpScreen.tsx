@@ -1,105 +1,122 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, BackHandler } from 'react-native';
+import {
+  View, Text, TouchableOpacity, TextInput,
+  KeyboardAvoidingView, Platform, BackHandler,
+} from 'react-native';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { AuthStackParamList } from '../../../navigation/types';
+import { Ionicons } from '@expo/vector-icons';
+import Animated, { FadeInDown, useSharedValue, useAnimatedStyle, withSequence, withTiming } from 'react-native-reanimated';
 import ScreenContainer from '../../../common/components/ScreenContainer';
 import Button from '../../../common/components/Button';
-import Input from '../../../common/components/Input';
 import LoadingOverlay from '../../../common/components/LoadingOverlay';
 import { showToast } from '../../../common/components/Toast';
-import IconWithHighlight from '../../../common/components/IconWithHighlight';
 import { supabase } from '../../../services/supabase';
 import { useTheme } from '../../../theme';
-import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../../../hooks/useAuth'; // <-- import
+import { useAuthStore } from '../../../store/authStore';
+import type { AuthStackParamList } from '../../../navigation/types';
 
-type OtpScreenNavigationProp = NativeStackNavigationProp<AuthStackParamList, 'Otp'>;
+type Nav = NativeStackNavigationProp<AuthStackParamList, 'Otp'>;
 
-const OtpScreen = () => {
-  const navigation = useNavigation<OtpScreenNavigationProp>();
-  const route = useRoute();
-  const { email, type } = route.params as { email: string; type: 'signup' | 'recovery' };
+export default function OtpScreen() {
+  const navigation = useNavigation<Nav>();
+  const { params } = useRoute<any>();
+  const { email, type } = params as { email: string; type: 'signup' | 'recovery' };
   const { theme } = useTheme();
-  const { setResettingPassword } = useAuth(); // <-- use setter
-  const [code, setCode] = useState('');
+  const isDark = theme === 'dark';
+  const setResettingPassword = useAuthStore((s) => s.setResettingPassword);
+
+  const [digits, setDigits] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
   const [timeLeft, setTimeLeft] = useState(60);
   const [canResend, setCanResend] = useState(false);
-  const timerRef = useRef<NodeJS.Timeout | undefined>(undefined);
-  const verifiedRef = useRef(false); // track if verification succeeded
+  const inputRefs = useRef<(TextInput | null)[]>([]);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const verifiedRef = useRef(false);
 
-  const textColor = theme === 'dark' ? '#FFFFFF' : '#000000';
-  const mutedColor = theme === 'dark' ? '#FFFFFF80' : '#00000080';
+  const textColor  = isDark ? '#FFFFFF' : '#000000';
+  const mutedColor = isDark ? '#FFFFFF70' : '#00000070';
+  const surfaceColor = isDark ? '#111111' : '#F5F5F5';
+  const borderColor  = isDark ? '#FFFFFF30' : '#00000020';
+
+  // Shake animation for wrong code
+  const shakeX = useSharedValue(0);
+  const shakeStyle = useAnimatedStyle(() => ({ transform: [{ translateX: shakeX.value }] }));
+  const shake = () => {
+    shakeX.value = withSequence(
+      withTiming(10, { duration: 60 }), withTiming(-10, { duration: 60 }),
+      withTiming(8,  { duration: 60 }), withTiming(-8,  { duration: 60 }),
+      withTiming(0,  { duration: 60 })
+    );
+  };
 
   useEffect(() => {
     startTimer();
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-      // If user leaves screen without successful verification, clear flag
-      if (type === 'recovery' && !verifiedRef.current) {
-        setResettingPassword(false);
-      }
-    };
+    setTimeout(() => inputRefs.current[0]?.focus(), 400);
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, []);
 
-  // Handle back button / android hardware back
   useFocusEffect(
     React.useCallback(() => {
-      const onBackPress = () => {
-        if (type === 'recovery' && !verifiedRef.current) {
-          setResettingPassword(false);
-        }
-        return false; // let default back action happen
+      const onBack = () => {
+        if (type === 'recovery' && !verifiedRef.current) setResettingPassword(false);
+        return false;
       };
-      BackHandler.addEventListener('hardwareBackPress', onBackPress);
-      return () => BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+      BackHandler.addEventListener('hardwareBackPress', onBack);
+      return () => BackHandler.removeEventListener('hardwareBackPress', onBack);
     }, [type])
   );
 
   const startTimer = () => {
-    setTimeLeft(60);
-    setCanResend(false);
+    setTimeLeft(60); setCanResend(false);
     timerRef.current = setInterval(() => {
       setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(timerRef.current);
-          setCanResend(true);
-          return 0;
-        }
+        if (prev <= 1) { clearInterval(timerRef.current!); setCanResend(true); return 0; }
         return prev - 1;
       });
     }, 1000);
   };
 
-  const handleVerify = async () => {
-    if (!code || code.length < 6) {
-      showToast('error', 'Invalid code', 'Please enter the 6-digit code');
+  const handleDigitChange = (index: number, value: string) => {
+    if (!/^\d*$/.test(value)) return;
+    const newDigits = [...digits];
+    if (value.length > 1) {
+      // Handle paste of full code
+      const pasted = value.replace(/\D/g, '').slice(0, 6).split('');
+      pasted.forEach((d, i) => { if (i < 6) newDigits[i] = d; });
+      setDigits(newDigits);
+      inputRefs.current[Math.min(pasted.length - 1, 5)]?.focus();
       return;
     }
+    newDigits[index] = value;
+    setDigits(newDigits);
+    if (value && index < 5) inputRefs.current[index + 1]?.focus();
+  };
 
+  const handleKeyPress = (index: number, key: string) => {
+    if (key === 'Backspace' && !digits[index] && index > 0) {
+      const newDigits = [...digits];
+      newDigits[index - 1] = '';
+      setDigits(newDigits);
+      inputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handleVerify = async () => {
+    const code = digits.join('');
+    if (code.length !== 6) { showToast('error', 'Incomplete', 'Enter all 6 digits'); shake(); return; }
     setLoading(true);
     try {
-      const { error } = await supabase.auth.verifyOtp({
-        email,
-        token: code,
-        type: type,
-      });
-
+      const { error } = await supabase.auth.verifyOtp({ email, token: code, type });
       if (error) throw error;
-
-      verifiedRef.current = true; // mark success
-      showToast('success', 'Verified!', 'Redirecting...');
-      
-      if (type === 'signup') {
-        // For signup, user is now logged in; flag is false anyway, root will switch to Main
-        // Navigation will be handled by auth state change, no need to navigate
-      } else if (type === 'recovery') {
-        // Navigate to set new password screen (flag remains true)
+      verifiedRef.current = true;
+      if (type === 'recovery') {
         navigation.navigate('SetNewPassword', { email });
       }
-    } catch (error: any) {
-      showToast('error', 'Verification failed', error.message);
+      // signup: RootNavigator auto-switches to App on session change
+    } catch (e: any) {
+      shake();
+      showToast('error', 'Invalid code', e.message ?? 'Verification failed');
     } finally {
       setLoading(false);
     }
@@ -109,74 +126,90 @@ const OtpScreen = () => {
     if (!canResend) return;
     setLoading(true);
     try {
-      if (type === 'signup') {
-        await supabase.auth.signInWithOtp({ email });
-      } else if (type === 'recovery') {
-        await supabase.auth.resetPasswordForEmail(email);
-      }
-      showToast('success', 'Code resent!', 'Check your email');
+      if (type === 'signup') await supabase.auth.signInWithOtp({ email });
+      else await supabase.auth.resetPasswordForEmail(email);
+      showToast('success', 'Code resent', 'Check your email');
+      setDigits(['', '', '', '', '', '']);
       startTimer();
-    } catch (err: any) {
-      showToast('error', 'Failed to resend', err.message);
+      inputRefs.current[0]?.focus();
+    } catch (e: any) {
+      showToast('error', 'Failed', e.message);
     } finally {
       setLoading(false);
     }
   };
 
+  const allFilled = digits.every((d) => d !== '');
+
   return (
     <ScreenContainer>
       <LoadingOverlay visible={loading} message="Verifying..." />
-      <View className="flex-1 justify-center px-6">
-        <View className="items-center mb-8">
-          <IconWithHighlight
-            icon={
-              <Ionicons
-                name="mail"
-                size={48}
-              />
-            }
-          />
-          <Text style={{ color: textColor, fontSize: 24, fontWeight: 'bold', marginTop: 16 }}>
-            Verify Your {type === 'recovery' ? 'Reset Code' : 'Email'}
-          </Text>
-          <Text style={{ color: mutedColor, textAlign: 'center', marginTop: 8 }}>
-            We've sent a 6-digit code to{'\n'}{email}
-          </Text>
-        </View>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+        <View style={{ flex: 1, justifyContent: 'center', padding: 24 }}>
+          {/* Back */}
+          <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginBottom: 32 }}>
+            <Ionicons name="arrow-back" size={24} color={textColor} />
+          </TouchableOpacity>
 
-        <Input
-          label="Verification Code"
-          value={code}
-          onChangeText={setCode}
-          placeholder="123456"
-          keyboardType="number-pad"
-          maxLength={6}
-          autoFocus
-        />
-
-        <Button
-          title="Verify"
-          onPress={handleVerify}
-          loading={loading}
-          className="mt-4"
-        />
-
-        <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 24 }}>
-          <Text style={{ color: mutedColor }}>Didn't receive code? </Text>
-          {canResend ? (
-            <Text
-              onPress={handleResend}
-              style={{ color: textColor, fontWeight: '600' }}
-            >
-              Resend
+          {/* Header */}
+          <Animated.View entering={FadeInDown.delay(0).duration(500)} style={{ marginBottom: 40 }}>
+            <View style={{ width: 64, height: 64, borderRadius: 16, backgroundColor: surfaceColor, alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+              <Text style={{ fontSize: 30 }}>✉️</Text>
+            </View>
+            <Text style={{ color: textColor, fontSize: 24, fontWeight: '800' }}>
+              {type === 'recovery' ? 'Reset Code' : 'Verify Email'}
             </Text>
-          ) : (
-            <Text style={{ color: mutedColor }}>Resend in {timeLeft}s</Text>
-          )}
+            <Text style={{ color: mutedColor, fontSize: 14, marginTop: 6, lineHeight: 20 }}>
+              We sent a 6-digit code to{'\n'}
+              <Text style={{ color: textColor, fontWeight: '600' }}>{email}</Text>
+            </Text>
+          </Animated.View>
+
+          {/* OTP boxes */}
+          <Animated.View entering={FadeInDown.delay(100).duration(500)} style={[shakeStyle, { flexDirection: 'row', gap: 10, marginBottom: 32, justifyContent: 'center' }]}>
+            {digits.map((digit, index) => (
+              <TextInput
+                key={index}
+                ref={(r) => { inputRefs.current[index] = r; }}
+                value={digit}
+                onChangeText={(v) => handleDigitChange(index, v)}
+                onKeyPress={({ nativeEvent }) => handleKeyPress(index, nativeEvent.key)}
+                keyboardType="numeric"
+                maxLength={index === 0 ? 6 : 1}  // allow paste on first box
+                selectTextOnFocus
+                style={{
+                  width: 48, height: 58,
+                  borderRadius: 12,
+                  borderWidth: digit ? 2 : 1.5,
+                  borderColor: digit ? textColor : borderColor,
+                  backgroundColor: digit ? (isDark ? '#1A1A1A' : '#F0F0F0') : surfaceColor,
+                  textAlign: 'center',
+                  fontSize: 22,
+                  fontWeight: '700',
+                  color: textColor,
+                }}
+              />
+            ))}
+          </Animated.View>
+
+          {/* Verify button */}
+          <Animated.View entering={FadeInDown.delay(200).duration(500)}>
+            <Button title="Verify" onPress={handleVerify} loading={loading} disabled={!allFilled} />
+          </Animated.View>
+
+          {/* Resend */}
+          <Animated.View entering={FadeInDown.delay(280).duration(500)} style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 28 }}>
+            <Text style={{ color: mutedColor }}>Didn't receive it?  </Text>
+            {canResend ? (
+              <TouchableOpacity onPress={handleResend}>
+                <Text style={{ color: textColor, fontWeight: '700' }}>Resend Code</Text>
+              </TouchableOpacity>
+            ) : (
+              <Text style={{ color: mutedColor }}>Resend in {timeLeft}s</Text>
+            )}
+          </Animated.View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </ScreenContainer>
   );
-};
-
-export default OtpScreen;
+}
